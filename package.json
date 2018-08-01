@@ -16,5 +16,12 @@
     "@types/express-graphql": "^0.6.1",
     "@types/node": "^10.5.4",
     "prettier": "^1.14.0"
+  },
+  "prettier": {
+    "tabWidth": 4,
+    "printWidth": 85,
+    "trailingComma": "all",
+    "bracketSpacing": false,
+    "arrowParens": "always"
   }
 }
