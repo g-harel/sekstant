@@ -3,6 +3,9 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 
+import {GraphQLSchema} from "graphql";
+import express from "express";
+import graphqlHTTP from "express-graphql";
 import {printSchema} from "graphql";
 import graphQLSchema from "swagger-to-graphql";
 
@@ -11,12 +14,12 @@ const APIServerPort = 8443;
 const certPath = path.join(os.homedir(), ".minikube");
 
 const tempDir = ".out";
-const swaggerSpec = path.join(tempDir, "swagger.json");
-const gqlSchema = path.join(tempDir, "schema.gql");
+const swaggerSpecPath = path.join(tempDir, "swagger.json");
+const gqlSchemaPath = path.join(tempDir, "schema.gql");
 
 const writeSpec = () =>
     new Promise((resolve, reject) => {
-        const file = fs.createWriteStream(swaggerSpec);
+        const file = fs.createWriteStream(swaggerSpecPath);
 
         const options: RequestOptions = {
             hostname: APIServerHost,
@@ -43,11 +46,32 @@ const writeSpec = () =>
         });
     });
 
+const genSchema = async (): Promise<GraphQLSchema> => {
+    const url = APIServerHost + ":" + APIServerPort;
+    return graphQLSchema(swaggerSpecPath, url, {});
+};
+
 const writeSchema = async () => {
-    const schema = await graphQLSchema(swaggerSpec, "", {});
-    fs.writeFileSync(gqlSchema, printSchema(schema), "utf8");
+    fs.writeFileSync(gqlSchemaPath, printSchema(await genSchema()), "utf8");
+};
+
+const serveSchema = async () => {
+    const app = express();
+
+    app.use(
+        "/graphql",
+        graphqlHTTP({
+            schema: await genSchema(),
+            graphiql: true,
+        }),
+    );
+
+    app.listen(3000, () => {
+        console.log("http://localhost:3000/graphql");
+    });
 };
 
 writeSpec()
     .then(writeSchema)
+    .then(serveSchema)
     .catch(console.error);
