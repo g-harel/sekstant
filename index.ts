@@ -15,9 +15,10 @@ const certPath = path.join(os.homedir(), ".minikube");
 
 const tempDir = ".out";
 const swaggerSpecPath = path.join(tempDir, "swagger.json");
+const swaggerCleanSpecPath = path.join(tempDir, "schema.json");
 const gqlSchemaPath = path.join(tempDir, "schema.gql");
 
-const writeSpec = () =>
+const writeSpec = async () =>
     new Promise((resolve, reject) => {
         const file = fs.createWriteStream(swaggerSpecPath);
 
@@ -46,9 +47,30 @@ const writeSpec = () =>
         });
     });
 
+const genCleanSpec = async () => {
+    return new Promise((resolve) => {
+        const input = fs.createReadStream(swaggerSpecPath, "utf8");
+        const output = fs.createWriteStream(swaggerCleanSpecPath, "utf8");
+
+        input.on("data", (chunk: string) => {
+            output.write(
+                chunk.replace(/io\.k8s\.((?:\w+\.)*\w+)/g, (_, name: string) => {
+                    return name.replace(/\./g, "");
+                }),
+            );
+        });
+
+        input.on("close", () => {
+            output.emit("close");
+            resolve();
+        });
+    });
+};
+
 const genSchema = async (): Promise<GraphQLSchema> => {
     const url = APIServerHost + ":" + APIServerPort;
-    return graphQLSchema(swaggerSpecPath, url, {});
+    const schema: GraphQLSchema = await graphQLSchema(swaggerCleanSpecPath, url, {});
+    return schema;
 };
 
 const writeSchema = async () => {
@@ -72,6 +94,7 @@ const serveSchema = async () => {
 };
 
 writeSpec()
+    .then(genCleanSpec)
     .then(writeSchema)
     .then(serveSchema)
     .catch(console.error);
