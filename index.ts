@@ -2,11 +2,11 @@ import https, {RequestOptions} from "https";
 import fs from "fs";
 import path from "path";
 import os from "os";
+import readline from "readline";
 
 import {GraphQLSchema} from "graphql";
 import express from "express";
 import graphqlHTTP from "express-graphql";
-import {printSchema} from "graphql";
 import graphQLSchema from "swagger-to-graphql";
 
 const APIServerHost = "192.168.99.100";
@@ -15,8 +15,14 @@ const certPath = path.join(os.homedir(), ".minikube");
 
 const tempDir = ".out";
 const swaggerSpecPath = path.join(tempDir, "swagger.json");
-const swaggerCleanSpecPath = path.join(tempDir, "schema.json");
-const gqlSchemaPath = path.join(tempDir, "schema.gql");
+
+const processSpec = (line: string): string => {
+    return line.replace(/io\.k8s\.((?:\w+\.)*\w+)/g, (_, name: string) => {
+        return name.replace(/\.(\w)/g, (_, letter: string) => {
+            return letter.toUpperCase();
+        });
+    });
+};
 
 const writeSpec = async () =>
     new Promise((resolve, reject) => {
@@ -38,43 +44,23 @@ const writeSpec = async () =>
                     `${res.statusCode} ${res.statusMessage}`;
                 reject(message);
             }
-            res.pipe(file);
-        });
 
-        file.on("finish", () => {
-            file.close();
-            resolve();
-        });
-    });
+            const reader = readline.createInterface({input: res});
+            reader.on("line", (line: string) => {
+                file.write(processSpec(line) + "\n");
+            });
 
-const genCleanSpec = async () => {
-    return new Promise((resolve) => {
-        const input = fs.createReadStream(swaggerSpecPath, "utf8");
-        const output = fs.createWriteStream(swaggerCleanSpecPath, "utf8");
-
-        input.on("data", (chunk: string) => {
-            output.write(
-                chunk.replace(/io\.k8s\.((?:\w+\.)*\w+)/g, (_, name: string) => {
-                    return name.replace(/\./g, "");
-                }),
-            );
-        });
-
-        input.on("close", () => {
-            output.emit("close");
-            resolve();
+            reader.on("close", () => {
+                file.close();
+                resolve();
+            })
         });
     });
-};
 
 const genSchema = async (): Promise<GraphQLSchema> => {
     const url = APIServerHost + ":" + APIServerPort;
-    const schema: GraphQLSchema = await graphQLSchema(swaggerCleanSpecPath, url, {});
+    const schema: GraphQLSchema = await graphQLSchema(swaggerSpecPath, url, {});
     return schema;
-};
-
-const writeSchema = async () => {
-    fs.writeFileSync(gqlSchemaPath, printSchema(await genSchema()), "utf8");
 };
 
 const serveSchema = async () => {
@@ -93,8 +79,11 @@ const serveSchema = async () => {
     });
 };
 
-writeSpec()
-    .then(genCleanSpec)
-    .then(writeSchema)
-    .then(serveSchema)
-    .catch(console.error);
+
+if (0) {
+    writeSpec();
+} else {
+    writeSpec()
+        .then(serveSchema)
+        .catch(console.error);
+}
