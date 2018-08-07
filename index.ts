@@ -17,11 +17,12 @@ const tempDir = ".out";
 const swaggerSpecPath = path.join(tempDir, "swagger.json");
 
 const processSpec = (line: string): string => {
-    return line.replace(/io\.k8s\.((?:\w+\.)*\w+)/g, (_, name: string) => {
+    line = line.replace(/io\.k8s\.((?:\w+\.)*\w+)/g, (_, name: string) => {
         return name.replace(/\.(\w)/g, (_, letter: string) => {
             return letter.toUpperCase();
         });
     });
+    return line;
 };
 
 const writeSpec = async () =>
@@ -51,8 +52,7 @@ const writeSpec = async () =>
             });
 
             reader.on("close", () => {
-                file.close();
-                resolve();
+                file.end(() => resolve());
             })
         });
     });
@@ -80,8 +80,9 @@ const serveSchema = async () => {
 };
 
 
-if (0) {
-    writeSpec();
+if (1) {
+    console.time();
+    writeSpec().then(() => console.timeEnd());
 } else {
     writeSpec()
         .then(serveSchema)
