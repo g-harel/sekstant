@@ -16,13 +16,29 @@ const certPath = path.join(os.homedir(), ".minikube");
 const tempDir = ".out";
 const swaggerSpecPath = path.join(tempDir, "swagger.json");
 
-const processSpec = (line: string): string => {
-    line = line.replace(/io\.k8s\.((?:\w+\.)*\w+)/g, (_, name: string) => {
-        return name.replace(/\.(\w)/g, (_, letter: string) => {
-            return letter.toUpperCase();
-        });
+const processName = (name: string) => {
+    return name.replace(/\.(\w)/g, (_, letter: string) => {
+        return letter.toUpperCase();
     });
-    return line;
+};
+
+const processSpec = (line: string): string => {
+    return line
+        .replace(/io\.k8s\.((?:\w+\.)*\w+)/g, (_, name: string) => {
+            return processName(name);
+        })
+        .replace(
+            /apiextensions-apiserver\.pkg\.apis\.apiextensions\.((?:\w+\.)*\w+)/g,
+            (_, name: string) => {
+                return processName(name);
+            },
+        )
+        .replace(
+            /kube-aggregator\.pkg\.apis\.apiregistration\.((?:\w+\.)*\w+)/g,
+            (_, name: string) => {
+                return processName(name);
+            },
+        );
 };
 
 const writeSpec = async () =>
@@ -53,7 +69,7 @@ const writeSpec = async () =>
 
             reader.on("close", () => {
                 file.end(() => resolve());
-            })
+            });
         });
     });
 
@@ -79,8 +95,7 @@ const serveSchema = async () => {
     });
 };
 
-
-if (1) {
+if (0) {
     console.time();
     writeSpec().then(() => console.timeEnd());
 } else {
