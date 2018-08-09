@@ -16,29 +16,20 @@ const certPath = path.join(os.homedir(), ".minikube");
 const tempDir = ".out";
 const swaggerSpecPath = path.join(tempDir, "swagger.json");
 
-const processName = (name: string) => {
-    return name.replace(/\.(\w)/g, (_, letter: string) => {
-        return letter.toUpperCase();
+const processLine = (name: string, prefix: string): string => {
+    const pattern = new RegExp(prefix + "((?:\\w+\\.)*\\w+)", "g");
+    return name.replace(pattern, (_, n: string) => {
+        return n.replace(/\.(\w)/g, (_, letter: string) => {
+            return letter.toUpperCase();
+        });
     });
 };
 
 const processSpec = (line: string): string => {
-    return line
-        .replace(/io\.k8s\.((?:\w+\.)*\w+)/g, (_, name: string) => {
-            return processName(name);
-        })
-        .replace(
-            /apiextensions-apiserver\.pkg\.apis\.apiextensions\.((?:\w+\.)*\w+)/g,
-            (_, name: string) => {
-                return processName(name);
-            },
-        )
-        .replace(
-            /kube-aggregator\.pkg\.apis\.apiregistration\.((?:\w+\.)*\w+)/g,
-            (_, name: string) => {
-                return processName(name);
-            },
-        );
+    line = processLine(line, "io.k8s.");
+    line = processLine(line, "apiextensions-apiserver.pkg.apis.apiextensions.");
+    line = processLine(line, "kube-aggregator.pkg.apis.apiregistration.");
+    return line;
 };
 
 const writeSpec = async () =>
