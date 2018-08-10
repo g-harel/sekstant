@@ -4,7 +4,7 @@ import path from "path";
 import os from "os";
 import readline from "readline";
 
-import {GraphQLSchema} from "graphql";
+import {GraphQLSchema, printSchema} from "graphql";
 import express from "express";
 import graphqlHTTP from "express-graphql";
 import graphQLSchema from "swagger-to-graphql";
@@ -19,8 +19,8 @@ const swaggerSpecPath = path.join(tempDir, "swagger.json");
 const processLine = (name: string, prefix: string): string => {
     const pattern = new RegExp(prefix + "((?:\\w+\\.)*\\w+)", "g");
     return name.replace(pattern, (_, n: string) => {
-        return n.replace(/\.(\w)/g, (_, letter: string) => {
-            return letter.toUpperCase();
+        return n.replace(/(\.|\d)\w/g, (match) => {
+            return match.toUpperCase().replace(".", "");
         });
     });
 };
@@ -29,6 +29,8 @@ const processSpec = (line: string): string => {
     line = processLine(line, "io.k8s.");
     line = processLine(line, "apiextensions-apiserver.pkg.apis.apiextensions.");
     line = processLine(line, "kube-aggregator.pkg.apis.apiregistration.");
+    line = line.replace(`"$ref": {`, `"_ref_": {`);
+    line = line.replace(`"$schema": {`, `"_schema_": {`);
     return line;
 };
 
@@ -65,8 +67,9 @@ const writeSpec = async () =>
     });
 
 const genSchema = async (): Promise<GraphQLSchema> => {
-    const url = APIServerHost + ":" + APIServerPort;
+    const url = "http://" + APIServerHost + ":" + APIServerPort;
     const schema: GraphQLSchema = await graphQLSchema(swaggerSpecPath, url, {});
+    fs.writeFileSync("./.out/schema.gql", printSchema(schema), "utf8");
     return schema;
 };
 
