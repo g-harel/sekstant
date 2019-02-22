@@ -1,11 +1,7 @@
 {
-  "name": "sekstant",
-  "version": "0.0.0",
   "scripts": {
-    "start": "dotenv node .",
     "fmt": "prettier --list-different --write --ignore-path .gitignore '**/*.{js,ts}'"
   },
-  "license": "MIT",
   "dependencies": {
     "express": "^4.16.4",
     "express-graphql": "^0.7.1",

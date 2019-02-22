@@ -1,16 +1,24 @@
-const path = require("path");
-const os = require("os");
+const fs = require("fs");
 
 const {createGraphQlSchema} = require("oasgraph");
 const express = require("express");
 const got = require("got");
 const graphqlHTTP = require("express-graphql");
-const syswidecas = require('syswide-cas');
+const syswidecas = require("syswide-cas");
 
-const APIServerHost = "192.168.99.100";
-const APIServerPort = 8443;
+// TODO default value
+const port = process.env.PORT;
+const graphiql = process.env.GRAPHIQL === "true";
 
-syswidecas.addCAs(path.join(os.homedir(), ".minikube", "ca.crt"))
+const APIServerHost = process.env.KUBERNETES_SERVICE_HOST;
+const APIServerPort = process.env.KUBERNETES_SERVICE_PORT;
+// TODO from env
+const APIServerCert = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+const APIServerToken = "/var/run/secrets/kubernetes.io/serviceaccount/token";
+
+const token = fs.readFileSync(APIServerToken);
+
+syswidecas.addCAs(APIServerCert);
 
 const main = async () => {
     const oas = await got({
@@ -22,12 +30,14 @@ const main = async () => {
     }).then((res) => res.body);
 
     const {schema} = await createGraphQlSchema(oas, {
-        baseUrl: `https://${APIServerHost}:${APIServerPort}`
+        baseUrl: `https://${APIServerHost}:${APIServerPort}`,
+        viewer: false,
+        headers: {Authentication: `Bearer ${token}`},
     });
 
     const app = express();
-    app.use("/graphql", graphqlHTTP({schema, graphiql: true}));
-    app.listen(3000, () => console.log("http://localhost:3000/graphql"));
+    app.use("/graphql", graphqlHTTP({schema, graphiql}));
+    app.listen(port, () => console.log(port));
 };
 
 main().catch((err) => {
