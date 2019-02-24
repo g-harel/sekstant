@@ -6,15 +6,13 @@ const got = require("got");
 const graphqlHTTP = require("express-graphql");
 const syswidecas = require("syswide-cas");
 
-// TODO default value
-const port = process.env.PORT;
+const port = process.env.PORT || 11456;
 const graphiql = process.env.GRAPHIQL === "true";
 
 const APIServerHost = process.env.KUBERNETES_SERVICE_HOST;
 const APIServerPort = process.env.KUBERNETES_SERVICE_PORT;
-// TODO from env
-const APIServerCert = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
-const APIServerToken = "/var/run/secrets/kubernetes.io/serviceaccount/token";
+const APIServerCert = process.env.CERTIFICATE_PATH || "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+const APIServerToken = process.env.TOKEN_PATH || "/var/run/secrets/kubernetes.io/serviceaccount/token";
 
 const token = fs.readFileSync(APIServerToken);
 
@@ -25,7 +23,7 @@ const main = async () => {
         hostname: APIServerHost,
         port: APIServerPort,
         path: "/swagger.json",
-        timeout: 3000,
+        timeout: 10 * 1e3,
         json: true,
     }).then((res) => res.body);
 
@@ -37,7 +35,7 @@ const main = async () => {
 
     const app = express();
     app.use("/graphql", graphqlHTTP({schema, graphiql}));
-    app.listen(port, () => console.log(port));
+    app.listen(port);
 };
 
 main().catch((err) => {

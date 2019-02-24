@@ -24,8 +24,8 @@ metadata:
   name: sekstant-role
 rules:
 - apiGroups: [""]
-  resources: ["pods", "nodes", "replicationcontrollers", "events", "limitranges", "services"]
-  verbs: ["get", "delete", "list", "patch", "update"]
+  resources: ["pods", "nodes", "services"]
+  verbs: ["get", "list"]
 
 ---
 
@@ -53,3 +53,8 @@ spec:
   containers:
   - name: sekstant
     image: gcr.io/sekstant/dev
+    ports:
+    - containerPort: 11456
+    env:
+    - name: GRAPHIQL
+      value: "true"
