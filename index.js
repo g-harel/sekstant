@@ -14,7 +14,13 @@ const APIServerPort = process.env.KUBERNETES_SERVICE_PORT;
 const APIServerCert = process.env.CERTIFICATE_PATH || "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
 const APIServerToken = process.env.TOKEN_PATH || "/var/run/secrets/kubernetes.io/serviceaccount/token";
 
-const token = fs.readFileSync(APIServerToken);
+let token;
+try {
+    token = fs.readFileSync(APIServerToken);
+} catch (e) {
+    console.error("Missing API token:", e.toString());
+    process.exit(1);
+}
 
 syswidecas.addCAs(APIServerCert);
 
@@ -30,7 +36,7 @@ const main = async () => {
     const {schema} = await createGraphQlSchema(oas, {
         baseUrl: `https://${APIServerHost}:${APIServerPort}`,
         viewer: false,
-        headers: {Authentication: `Bearer ${token}`},
+        headers: {Authorization: `Bearer ${token}`},
     });
 
     const app = express();
