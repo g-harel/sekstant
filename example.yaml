@@ -44,4 +44,4 @@ spec:
     - containerPort: 11456
     env:
     - name: GRAPHIQL
-      value: "true"
+      value: "enabled"

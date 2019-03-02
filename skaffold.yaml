@@ -7,4 +7,4 @@ build:
 deploy:
   kubectl:
     manifests:
-    - "manifest.yaml"
+    - "example.yaml"
