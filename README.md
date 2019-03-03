@@ -3,9 +3,6 @@
 <!--
 
 TODO
-- test watch
-- test create
-- publish/build version
 - listen to changes to api spec (CRD)
 
  -->
@@ -20,7 +17,7 @@ metadata:
 spec:
   containers:
   - name: sekstant
-    image: gcr.io/sekstant/sekstant # TODO version
+    image: gcr.io/sekstant/sekstant
     ports:
     - containerPort: 11456
 ```
