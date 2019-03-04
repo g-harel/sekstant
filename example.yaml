@@ -39,7 +39,7 @@ spec:
   serviceAccountName: sekstant
   containers:
   - name: sekstant
-    image: gcr.io/sekstant/dev
+    image: gcr.io/sekstant/sekstant
     ports:
     - containerPort: 11456
     env:
