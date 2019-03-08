@@ -1,3 +1,5 @@
+![image](https://user-images.githubusercontent.com/9319710/54000904-463d8180-4117-11e9-9bb2-09e023a7e66c.png)
+
 # sekstant
 
 GraphQL interface for the Kubernetes API.
