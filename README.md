@@ -17,7 +17,7 @@ spec:
     - containerPort: 11456
 ```
 
-The image expects to run inside a [Kubernetes](https://kubernetes.io/) cluster. On startup, it queries the API server for it's [Swagger specification](https://swagger.io/specification/) and translates it into a [GraphQL](https://graphql.org/) schema which is then exposed as an HTTP endpoint.
+The image expects to run inside a [Kubernetes](https://kubernetes.io/) cluster. On startup, it queries the API server for its [Swagger specification](https://swagger.io/specification/) and translates it into a [GraphQL](https://graphql.org/) schema which is then exposed as an HTTP endpoint.
 
 _[Custom resource definitions may be supported in the future.](https://github.com/kubernetes/enhancements/issues/692)_
 
